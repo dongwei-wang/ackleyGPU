@@ -26,25 +26,25 @@ F3::~F3(){
 }
 
 double F3::compute(double*x){
-	// if(Ovector == NULL) {
-	//     Ovector = readOvector();
-	// }
+	if(Ovector == NULL) {
+		Ovector = readOvector();
+	}
 
-	// for(int i = dimension - 1; i >= 0; i--) {
-	//     anotherz[i] = 0 - Ovector[i];
-	// }
+	for(int i = dimension - 1; i >= 0; i--) {
+		anotherz[i] = 0 - Ovector[i];
+	}
 
 	// return ackley_GPU(anotherz, dimension);
 	return ackley(x, dimension);
 }
 
-double* F3::readfile(){
-	if(Ovector == NULL){
-		Ovector = readOvector();
-		for( int i = dimension -1; i>=0; i-- )
-			anotherz[i] = 0-Ovector[i];
-	}
-	return Ovector;
-}
+// double* F3::readfile(){
+//     if(Ovector == NULL){
+//         Ovector = readOvector();
+//         for( int i = dimension -1; i>=0; i-- )
+//             anotherz[i] = 0-Ovector[i];
+//     }
+//     return Ovector;
+// }
 
 

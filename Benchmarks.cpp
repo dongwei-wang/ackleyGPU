@@ -1,4 +1,5 @@
 #include "Benchmarks.h"
+//#include "ackley_kernel.cu"
 
 Benchmarks::Benchmarks(){
 	dimension = 1000;
@@ -719,13 +720,13 @@ double Benchmarks::ackley(double *z,int dim){
 	// parallel end
 
 	sum = -20.0 * exp(-0.2 * sqrt(sum1 / dim)) - exp(sum2 / dim) + 20.0 + E;
-	return(sum);
+	return sum;
 }
 
 double Benchmarks::ackley_GPU(double *x, int dim){
 
 	//return ackley_GPU_kernel(x, dim);
-	//return 0.0f;
+	return 0.0f;
 }
 
 // ackley function for m-group non-separable

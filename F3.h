@@ -10,7 +10,7 @@ class F3 : public Benchmarks{
 		F3();
 		double compute(double* x) ;
 		//double compute() ;
-		double* readfile();
+//		double* readfile();
 
 		/* double compute(vector<double> x) ; */
 		~F3();

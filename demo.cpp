@@ -21,7 +21,7 @@ int main(){
 	// }
 
 	fp = new F3();
-	//X = fp->readOvector();
+	X = fp->readOvector();
 	gettimeofday(&start, NULL);
 	for (unsigned j=0; j < run; j++){
 		ackley = fp->compute(X);

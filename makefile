@@ -1,26 +1,51 @@
-# Dongwei Wang
-# wdw828@gmail.com
+BIN         		:= ackley
 
-BIN := demo
+# CUDA toolkit path
+CUDA_INSTALL_PATH 	:= /usr/local/cuda-7.5
+NVCC 				:= $(CUDA_INSTALL_PATH)/bin/nvcc
 
-CC=g++
-# CXXFLAGS=-Wall -pedantic -std=c++11 -O3
-CXXFLAGS=-Wall -pedantic -std=c++0x  -ggdb -DDEBUG
+# include path
+INCD 				:= -I$(CUDA_INSTALL_PATH)/include
+# lib path
+LIBS 				:= -L$(CUDA_INSTALL_PATH)/lib64 -lcuda -lcudart
 
-OBJECTS=demo.o  Benchmarks.o F3.o
 
-$(BIN): $(OBJECTS)
-	$(CC) $(CXXFLAGS) -o demo $(OBJECTS)
+# compile flags for g++ and nvcc
+CXXFLAGS  			:= -O3
+CXXFLAGS 			:= -Wall -pedantic -std=c++0x -ggdb -DDEBUG
+NVCCFLAGS 			:= -Xptxas="-v" -O3 \
+					# -gencode arch=compute_30,code=sm_30 \
+					# -gencode arch=compute_35,code=sm_35 \
+					# -gencode arch=compute_50,code=sm_50 \
+					# -gencode arch=compute_52,code=sm_52
 
-demo.o: demo.cpp Header.h  Benchmarks.h F3.h
-	$(CC) $(CXXFLAGS) -c demo.cpp
+# macro for files
+CPP_SOURCES       	:= $(wildcard *.cpp)
+CU_SOURCES        	:= ackley_kernel.cu
+HEADERS           	:= $(wildcard *.h)
+CPP_OBJS          	:= $(patsubst %.cpp, %.o, $(CPP_SOURCES))
+CU_OBJS           	:= $(patsubst %.cu, %.o, $(CU_SOURCES))
 
-Benchmarks.o:  Benchmarks.h Benchmarks.cpp
-	$(CC) $(CXXFLAGS) -c Benchmarks.cpp
+# start to make
+all: $(BIN)
+$(BIN): $(CU_OBJS) $(CPP_OBJS)
+	$(CXX) $(CXXFLAGS) -o $(BIN) $(CU_OBJS) $(CPP_OBJS) $(LIBS)
 
-F3.o: F3.h Benchmarks.h F3.cpp
-	$(CC) $(CXXFLAGS) -c F3.cpp
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-.PHONY : clean
+$(CU_OBJS): $(CU_SOURCES)
+	$(NVCC) $(NVCCFLAGS) -o $(CU_OBJS) -c $(CU_SOURCES)
+
+# clean unnecessary files
 clean:
-	rm -f $(BIN) $(OBJECTS)
+	rm -f $(BIN) *.o tags
+
+cppecho:
+	echo "$(CPP_SOURCES)"
+
+headerecho:
+	echo "$(HEADERS)"
+
+cuecho:
+	echo "$(CU_SOURCES)"

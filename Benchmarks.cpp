@@ -1,6 +1,9 @@
 #include "Benchmarks.h"
 //#include "ackley_kernel.cu"
 
+extern "C"
+double ackley_GPU_kernel(double *x, int dim);
+
 Benchmarks::Benchmarks(){
 	dimension = 1000;
 	nonSeparableGroupSize = 50;
@@ -725,8 +728,8 @@ double Benchmarks::ackley(double *z,int dim){
 
 double Benchmarks::ackley_GPU(double *x, int dim){
 
-	//return ackley_GPU_kernel(x, dim);
-	return 0.0f;
+	return ackley_GPU_kernel(x, dim);
+	//return 0.0f;
 }
 
 // ackley function for m-group non-separable

@@ -1,6 +1,10 @@
 #include "Benchmarks.h"
 //#define BLOCK_SIZE 1024
 
+
+extern "C"
+double ackley_GPU_kernel(double *x, int dim);
+
 __global__ void ackley_kernel(double *x, double *sum1, double *sum2, int dim){
 
 	__shared__ double sm[BLOCK_SIZE];

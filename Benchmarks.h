@@ -14,7 +14,7 @@ using namespace std;
 
 #define PI (3.141592653589793238462643383279)
 #define E  (2.718281828459045235360287471352)
-#define BLOCK_SIZE (1024)
+#define BLOCK_SIZE (256)
 
 #define L(i) ((int64_t)i)
 #define D(i) ((double)i)

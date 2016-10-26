@@ -14,6 +14,8 @@ using namespace std;
 
 #define PI (3.141592653589793238462643383279)
 #define E  (2.718281828459045235360287471352)
+#define BLOCK_SIZE (1024)
+
 #define L(i) ((int64_t)i)
 #define D(i) ((double)i)
 
@@ -45,6 +47,11 @@ class Benchmarks{
 		/* double elliptic(double*x, int dim, int k); */
 		double rastrigin(double*x,int dim);
 		double rastrigin(double *x, int dim, int k);
+
+		/*** wangd7 beg ***/
+		double ackley_GPU(double *x, int dim);
+		/*** wangd7 end ***/
+
 		double ackley(double*x,int dim);
 		double ackley(double*x,int dim, int k);
 		/* double rot_elliptic(double*x,int dim); */
@@ -110,7 +117,8 @@ class Benchmarks{
 		Benchmarks();
 		virtual ~Benchmarks();
 		virtual double compute(double* x){return 0;};
-		virtual double compute(vector<double> x){return 0;};
+		//virtual double compute() {return 0;}
+		virtual double compute(vector<double> x){return 0;}
 
 		int getMinX();
 		int getMaxX();

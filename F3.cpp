@@ -1,5 +1,3 @@
-#include "F3.h"
-
 /**
  * Shifted Ackley's Function
  *
@@ -11,6 +9,8 @@
  * Science and Technology, University of Science and Technology of China,
  * Hefei, Anhui, China.
  */
+
+#include "F3.h"
 
 F3::F3() : Benchmarks(){
 	Ovector = NULL;
@@ -25,16 +25,26 @@ F3::~F3(){
 	delete[] anotherz;
 }
 
-
 double F3::compute(double*x){
+	// if(Ovector == NULL) {
+	//     Ovector = readOvector();
+	// }
 
-	if(Ovector == NULL) {
-		Ovector = readOvector();
-	}
+	// for(int i = dimension - 1; i >= 0; i--) {
+	//     anotherz[i] = 0 - Ovector[i];
+	// }
 
-	for(int i = dimension - 1; i >= 0; i--) {
-		anotherz[i] = x[i] - Ovector[i];
-	}
-
-	return ackley(anotherz, dimension);
+	// return ackley_GPU(anotherz, dimension);
+	return ackley(x, dimension);
 }
+
+double* F3::readfile(){
+	if(Ovector == NULL){
+		Ovector = readOvector();
+		for( int i = dimension -1; i>=0; i-- )
+			anotherz[i] = 0-Ovector[i];
+	}
+	return Ovector;
+}
+
+

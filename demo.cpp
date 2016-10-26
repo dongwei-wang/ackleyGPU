@@ -7,7 +7,7 @@ int main(){
 	/*  Test the basic benchmark function */
 	double* X;
 	Benchmarks* fp=NULL;
-	unsigned dim = 1000;
+	//unsigned dim = 1000;
 	unsigned run = 1;
 
 	struct timeval start, end;
@@ -15,12 +15,13 @@ int main(){
 	double mtime;
 	double ackley;
 
-	X = new double[dim];
-	for (unsigned i=0; i<dim; i++){
-		X[i]=0;
-	}
+	// X = new double[dim];
+	// for (unsigned i=0; i<dim; i++){
+	//     X[i]=0;
+	// }
 
 	fp = new F3();
+	X = fp->readOvector();
 	gettimeofday(&start, NULL);
 	for (unsigned j=0; j < run; j++){
 		ackley = fp->compute(X);

@@ -27,6 +27,6 @@
 
 using namespace std;
 
-Benchmarks* generateFuncObj(int funcID);
+//Benchmarks* generateFuncObj(int funcID);
 
 #endif

@@ -1,9 +1,22 @@
-#include "Benchmarks.h"
+#include "Header.h"
+
+// cuda error check macro definition
+#define ErrorCheck(stmt) {											 \
+	cudaError_t err = stmt;                                          \
+	if (err != cudaSuccess)                                          \
+	{                                                                \
+		printf( "Failed to run stmt %d ", __LINE__);                 \
+		printf( "Got CUDA error ...  %s ", cudaGetErrorString(err)); \
+		return -1;                                                   \
+	}                                                                \
+}
+
 
 extern "C"
 double ackley_GPU_impl(double *x, int dim);
 extern "C"
 double ackley_CPU_impl(double *x, int dim);
+
 
 int sign(double x)
 {
@@ -42,75 +55,76 @@ double c2(double x)
 }
 
 __global__ void ackley_kernel(double *d_x, double *sum1, double *sum2, int dim){
-
 	// shared memory
 	__shared__ double sm[BLOCK_SIZE];
 	__shared__ double sm_cos[BLOCK_SIZE];
 
 	// global thread index
 	int global_tid = blockDim.x * blockIdx.x + threadIdx.x;
+	// local thread index in a block
 	int tid = threadIdx.x;
 
-	if(global_tid < dim){
+	if(global_tid < dim)
 		sm[tid] = d_x[global_tid];
+	else
+		sm[tid] = 0.0f;
 
-		// initialization of sign, hat, c1, c2
-		int sign;
-		if( sm[tid] == 0 )
-			sign = 0;
-		else
-			sign = sm[tid]>0 ? 1:-1;
+	// initialization of sign, hat, c1, c2
+	int sign;
+	if( sm[tid] == 0 )
+		sign = 0;
+	else
+		sign = sm[tid]>0 ? 1:-1;
 
-		double hat;
-		if(sm[tid] == 0)
-			hat = 0;
-		else
-			hat = log(abs(sm[tid]));
+	double hat;
+	if(sm[tid] == 0)
+		hat = 0;
+	else
+		hat = log(abs(sm[tid]));
 
-		double c1;
-		if(sm[tid]>0)
-			c1 = 10;
-		else
-			c1 = 5.5;
+	double c1;
+	if(sm[tid]>0)
+		c1 = 10;
+	else
+		c1 = 5.5;
 
-		double c2;
-		if( sm[tid]>0 )
-			c2 = 7.9;
-		else
-			c2=3.1;
+	double c2;
+	if( sm[tid]>0 )
+		c2 = 7.9;
+	else
+		c2=3.1;
 
-		// transform osz
-		sm[tid] = sign * exp(hat + 0.049 * (sin(c1*hat) + sin(c2*hat)));
+	// transform osz
+	sm[tid] = sign * exp(hat + 0.049 * (sin(c1*hat) + sin(c2*hat)));
 
-		// transform asy
-		if(sm[tid]>0)
-			sm[tid] = pow(sm[tid], 1+0.2* global_tid/(double)(dim-1) * sqrt(sm[tid]));
+	// transform asy
+	if(sm[tid]>0)
+		sm[tid] = pow(sm[tid], 1+0.2* global_tid/(double)(dim-1) * sqrt(sm[tid]));
 
-		// lambda
-		sm[tid] = sm[tid] * pow( 10.0, 0.5* global_tid/((double)(dim-1)) );
+	// lambda
+	sm[tid] = sm[tid] * pow( 10.0, 0.5* global_tid/((double)(dim-1)) );
 
-		// cos(2.0 * pi * x[i])
-		sm_cos[tid] = cos(2.0 * PI * sm[tid]);
+	// cos(2.0 * pi * x[i])
+	sm_cos[tid] = cos(2.0 * PI * sm[tid]);
 
-		// x square
-		sm[tid] = sm[tid]*sm[tid];
+	// x square
+	sm[tid] = sm[tid]*sm[tid];
 
+	__syncthreads();
+
+	// reduction
+	for( int i=BLOCK_SIZE/2; i>0; i>>=1 ){
+		if(tid<i){
+			sm[tid] += sm[tid+i];
+			sm_cos[tid] += sm_cos[tid+i];
+		}
 		__syncthreads();
+	}
 
-		// reduction
-		for( int i=BLOCK_SIZE/2; i>0; i>>=1 ){
-			if(tid<i){
-				sm[tid] += sm[tid+i];
-				sm_cos[tid] += sm_cos[tid+i];
-			}
-			__syncthreads();
-		}
-
-		// get the value from first element of shared memory
-		if(tid == 0){
-			sum1[blockIdx.x] = sm[tid];
-			sum2[blockIdx.x] = sm_cos[tid];
-		}
+	// get the value from first element of shared memory
+	if(tid == 0){
+		sum1[blockIdx.x] = sm[tid];
+		sum2[blockIdx.x] = sm_cos[tid];
 	}
 }
 
@@ -125,9 +139,9 @@ double ackley_GPU_impl(double *x, int dim){
 	h_sum1 = (double*)malloc(blk_cnt*sizeof(double));
 	h_sum2 = (double*)malloc(blk_cnt*sizeof(double));
 
-	cudaMalloc(&d_x, dim*sizeof(double));
-	cudaMalloc(&d_sum1, blk_cnt * sizeof(double));
-	cudaMalloc(&d_sum2, blk_cnt * sizeof(double));
+	ErrorCheck(cudaMalloc(&d_x, dim*sizeof(double)));
+	ErrorCheck(cudaMalloc(&d_sum1, blk_cnt * sizeof(double)));
+	ErrorCheck(cudaMalloc(&d_sum2, blk_cnt * sizeof(double)));
 
 	cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -138,16 +152,10 @@ double ackley_GPU_impl(double *x, int dim){
 	dim3 block(BLOCK_SIZE);
 
 	cudaEventRecord(start);
-	cudaMemcpy(d_x, x, dim*sizeof(double), cudaMemcpyHostToDevice);
+	ErrorCheck(cudaMemcpy(d_x, x, dim*sizeof(double), cudaMemcpyHostToDevice));
 	ackley_kernel<<< grid, block >>>(d_x, d_sum1, d_sum2, dim);
-	cudaMemcpy(h_sum1, d_sum1, blk_cnt*sizeof(double), cudaMemcpyDeviceToHost);
-	cudaMemcpy(h_sum2, d_sum2, blk_cnt*sizeof(double), cudaMemcpyDeviceToHost);
-
-	cudaError_t cudaError = cudaGetLastError();
-	if(cudaError != cudaSuccess){
-		fprintf(stderr, "cudaGetLastError() return %d: %s\n", cudaError, cudaGetErrorString(cudaError));
-		exit(EXIT_FAILURE);
-	}
+	ErrorCheck(cudaMemcpy(h_sum1, d_sum1, blk_cnt*sizeof(double), cudaMemcpyDeviceToHost));
+	ErrorCheck(cudaMemcpy(h_sum2, d_sum2, blk_cnt*sizeof(double), cudaMemcpyDeviceToHost));
 
 	for(int i=0; i<blk_cnt; i++){
 		sum1 += h_sum1[i];
@@ -155,12 +163,12 @@ double ackley_GPU_impl(double *x, int dim){
 	}
 	ackley = -20.0 * exp(-0.2 * sqrt(sum1 / dim)) - exp(sum2 / dim) + 20.0 + E;
 
-	//ackley =  -20.0 * exp(-0.2 * sqrt(sum1/dim)) - exp(sum2/dim) + 20.0 + E;
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
+
 	printf("/***** GPU IMPLEMENTATION *****/\n");
-	printf("GPU time for ackley shift is %1.20E, time is %f ms\n\n", ackley, milliseconds );
+	printf("GPU implementation for ackley shift is %1.20E, time is %f ms\n", ackley, milliseconds );
 
 	cudaFree(d_x);
 	cudaFree(d_sum1);
@@ -216,7 +224,6 @@ double ackley_CPU_impl(double *z, int dim){
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	printf("/***** CPU IMPLEMENTATION *****/\n");
-	printf("CPU time for ackley shift is %1.20E, time is %f ms\n\n", sum, milliseconds );
-
+	printf("CPU implementation for ackley shift is %1.20E, time is %f ms\n", sum, milliseconds );
 	return sum;
 }

@@ -7,26 +7,22 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
-
-// benchmark set header files
-// #include "F1.h"
-// #include "F2.h"
-#include "F3.h"
-// #include "F4.h"
-// #include "F5.h"
-// #include "F6.h"
-// #include "F7.h"
-// #include "F8.h"
-// #include "F9.h"
-// #include "F10.h"
-// #include "F11.h"
-// #include "F12.h"
-// #include "F13.h"
-// #include "F14.h"
-// #include "F15.h"
+#include <unistd.h>
+#include <sys/time.h>
+#include <vector>
+#include <string>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
+//#include "F3.h"
 
 using namespace std;
 
-//Benchmarks* generateFuncObj(int funcID);
+#define PI (3.141592653589793238462643383279)
+#define E  (2.718281828459045235360287471352)
+#define BLOCK_SIZE (256)
+
+#define L(i) ((int64_t)i)
+#define D(i) ((double)i)
 
 #endif

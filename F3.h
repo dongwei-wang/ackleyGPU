@@ -8,12 +8,12 @@ class F3 : public Benchmarks{
 
 	public:
 		F3();
-		double compute(double* x) ;
-		double compute_GPU(double *x);
-		//double compute() ;
-		double* readfile();
 
-		/* double compute(vector<double> x) ; */
+		double compute(double* x) ;
+		double compute_CPU(double *x);
+		double compute_GPU(double *x);
 		~F3();
+		int minX;
+		int maxX;
 };
 #endif

@@ -12,8 +12,7 @@ int sign(double x)
 	return 0;
 }
 
-double hat(double x)
-{
+double hat(double x) {
 	if (x==0){
 		return 0;
 	}
@@ -53,7 +52,6 @@ __global__ void ackley_kernel(double *d_x, double *sum1, double *sum2, int dim){
 	int tid = threadIdx.x;
 
 	if(global_tid < dim){
-
 		sm[tid] = d_x[global_tid];
 
 		// initialization of sign, hat, c1, c2
@@ -120,7 +118,7 @@ double ackley_GPU_impl(double *x, int dim){
 	int blk_cnt = (dim + BLOCK_SIZE - 1)/BLOCK_SIZE;
 	double *h_sum1, *h_sum2;
 	double *d_x, *d_sum1, *d_sum2;
-	double ackley=0;
+	double ackley;
 	double sum1=0;
 	double sum2=0;
 
@@ -136,17 +134,14 @@ double ackley_GPU_impl(double *x, int dim){
     cudaEventCreate(&stop);
     float milliseconds = 0;
 
-	cudaMemcpy(d_x, x, dim*sizeof(double), cudaMemcpyHostToDevice);
 	dim3 grid(blk_cnt);
 	dim3 block(BLOCK_SIZE);
 
-    cudaEventRecord(start);
-
+	cudaEventRecord(start);
+	cudaMemcpy(d_x, x, dim*sizeof(double), cudaMemcpyHostToDevice);
 	ackley_kernel<<< grid, block >>>(d_x, d_sum1, d_sum2, dim);
-
 	cudaMemcpy(h_sum1, d_sum1, blk_cnt*sizeof(double), cudaMemcpyDeviceToHost);
 	cudaMemcpy(h_sum2, d_sum2, blk_cnt*sizeof(double), cudaMemcpyDeviceToHost);
-
 
 	cudaError_t cudaError = cudaGetLastError();
 	if(cudaError != cudaSuccess){
@@ -158,8 +153,9 @@ double ackley_GPU_impl(double *x, int dim){
 		sum1 += h_sum1[i];
 		sum2 += h_sum2[i];
 	}
+	ackley = -20.0 * exp(-0.2 * sqrt(sum1 / dim)) - exp(sum2 / dim) + 20.0 + E;
 
-	ackley =  -20.0 * exp(-0.2 * sqrt(sum1/dim)) - exp(sum2/dim) + 20.0 + E;
+	//ackley =  -20.0 * exp(-0.2 * sqrt(sum1/dim)) - exp(sum2/dim) + 20.0 + E;
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
@@ -175,9 +171,7 @@ double ackley_GPU_impl(double *x, int dim){
 	return ackley;
 }
 
-
 double ackley_CPU_impl(double *z, int dim){
-
 	cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);

@@ -42,6 +42,7 @@ int main(){
 	// double mtime;
 	double ackley_CPU, ackley_GPU;
 
+
 	fp = new F3();
 	X_CPU = readOvector(fp->getDimension(), fp->getID());
 	X_GPU = readOvector(fp->getDimension(), fp->getID());

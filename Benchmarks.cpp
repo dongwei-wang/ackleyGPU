@@ -6,7 +6,7 @@ extern "C"
 double ackley_CPU_impl(double *x, int dim);
 
 Benchmarks::Benchmarks(){
-	dimension = 1000;
+	dimension = 1024;
 }
 
 Benchmarks::~Benchmarks(){

@@ -38,7 +38,7 @@ double* readOvector(int dimension, char* filename) {
 }
 
 int main(int argc, char *argv[]){
-	double *X_CPU, *X_GPU;
+	double *X_CPU, *X_GPU, *X_GPU_STREAM;
 	F3* fp = NULL;
 	fp = new F3();
 	for (int i=1; i<argc; i++){
@@ -47,8 +47,10 @@ int main(int argc, char *argv[]){
 		cout<<"The size of input is : "<<instance_cnt<<endl;
 		X_CPU = readOvector(instance_cnt, argv[i]);
 		X_GPU = readOvector(instance_cnt, argv[i]);
+		X_GPU_STREAM = readOvector(instance_cnt, argv[i]);
 		fp->compute_CPU(X_CPU, instance_cnt);
 		fp->compute_GPU(X_GPU, instance_cnt);
+		fp->compute_GPU_steams(X_GPU_STREAM, instance_cnt, 4);
 		cout<<"Processing END"<<endl<<endl;
 		delete []X_CPU;
 		delete []X_GPU;

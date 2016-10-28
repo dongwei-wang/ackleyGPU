@@ -7,6 +7,8 @@ extern "C"
 double ackley_GPU_impl(double *x, int dim);
 extern "C"
 double ackley_CPU_impl(double *x, int dim);
+extern "C"
+double ackley_GPU_streams(double *x, int dim, int stream_cnt);
 
 F3::F3(){
 	Ovector = NULL;
@@ -31,6 +33,11 @@ double F3::compute_CPU(double *x, int dimension){
 double F3::compute_GPU(double *x, int dimension){
 	return ackley_GPU_impl(x, dimension);
 }
+
+double F3::compute_GPU_steams(double *x, int dimension, int stream_cnt){
+	return ackley_GPU_streams(x, dimension, stream_cnt);
+}
+
 
 void F3::transform_osz(double* z, int dim){
 	// apply osz transformation to z

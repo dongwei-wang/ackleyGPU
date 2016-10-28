@@ -16,6 +16,8 @@ extern "C"
 double ackley_GPU_impl(double *x, int dim);
 extern "C"
 double ackley_CPU_impl(double *x, int dim);
+extern "C"
+double ackley_GPU_streams(double *x, int dim, int stream_cnt);
 
 
 int sign(double x)
@@ -168,7 +170,7 @@ double ackley_GPU_impl(double *x, int dim){
 	cudaEventElapsedTime(&milliseconds, start, stop);
 
 	printf("/***** GPU IMPLEMENTATION *****/\n");
-	printf("GPU implementation for ackley shift is %1.20E, time is %f ms\n", ackley, milliseconds );
+	printf("GPU implementation for ackley shift is		%1.20E, time is %f ms\n", ackley, milliseconds );
 
 	cudaFree(d_x);
 	cudaFree(d_sum1);
@@ -176,6 +178,85 @@ double ackley_GPU_impl(double *x, int dim){
 
 	free(h_sum1);
 	free(h_sum2);
+	return ackley;
+}
+
+double ackley_GPU_streams(double *x, int dim, int stream_cnt){
+	if( stream_cnt <= 0 ){
+		printf("The number of streams should greater than 0 \n");
+	}
+
+	double *h_x, *h_sum1, *h_sum2;
+	double *d_x, *d_sum1, *d_sum2;
+	double ackley;
+	double sum1=0;
+	double sum2=0;
+
+	int blk_cnt = ( dim + BLOCK_SIZE - 1 )/BLOCK_SIZE;
+	ErrorCheck(cudaMallocHost(&h_x,		dim*sizeof(double)));
+	ErrorCheck(cudaMallocHost(&h_sum1,	blk_cnt*sizeof(double)));
+	ErrorCheck(cudaMallocHost(&h_sum2,	blk_cnt*sizeof(double)));
+
+	memcpy(h_x, x, dim*sizeof(double));
+
+	ErrorCheck(cudaMalloc(&d_x, dim*sizeof(double)));
+	ErrorCheck(cudaMalloc(&d_sum1, blk_cnt * sizeof(double)));
+	ErrorCheck(cudaMalloc(&d_sum2, blk_cnt * sizeof(double)));
+
+	cudaStream_t *streams = (cudaStream_t*)malloc(stream_cnt*sizeof(cudaStream_t));
+	for( int i=0; i<stream_cnt; i++ )
+		ErrorCheck(cudaStreamCreate(&streams[i]));
+
+	cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float milliseconds = 0;
+
+	cudaEventRecord(start);
+
+	int instances_per_stream = dim/stream_cnt;
+	int blk_cnt_per_stream = (instances_per_stream + BLOCK_SIZE -1 )/BLOCK_SIZE;
+
+	dim3 grid(blk_cnt);
+	dim3 block(BLOCK_SIZE);
+
+	for( int i=0; i<stream_cnt; i++ ){
+		ErrorCheck(cudaMemcpyAsync(&d_x[i*instances_per_stream],
+					&h_x[i*instances_per_stream],
+					instances_per_stream*sizeof(double),
+					cudaMemcpyHostToDevice,
+					streams[i]));
+
+		// grid and block size is the same with nostreams version
+		// add parameter three and four in multiple streams version
+		ackley_kernel<<< grid, block, 0, streams[i] >>>(d_x, d_sum1, d_sum2, dim);
+
+		ErrorCheck(cudaMemcpyAsync(&h_sum1[i*blk_cnt_per_stream],
+					&d_sum1[i*blk_cnt_per_stream],
+					blk_cnt_per_stream*sizeof(double),
+					cudaMemcpyDeviceToHost,
+					streams[i]));
+
+		ErrorCheck(cudaMemcpyAsync(&h_sum2[i*blk_cnt_per_stream],
+					&d_sum2[i*blk_cnt_per_stream],
+					blk_cnt_per_stream*sizeof(double),
+					cudaMemcpyDeviceToHost,
+					streams[i]));
+	}
+	cudaDeviceSynchronize();
+
+	for(int i=0; i<blk_cnt; i++){
+		sum1 += h_sum1[i];
+		sum2 += h_sum2[i];
+	}
+	ackley = -20.0 * exp(-0.2 * sqrt(sum1 / dim)) - exp(sum2 / dim) + 20.0 + E;
+
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&milliseconds, start, stop);
+
+	printf("/***** GPU STREAMS IMPLEMENTATION *****/\n");
+	printf("GPU streams implementation for ackley shift is	%1.20E, time is %f ms\n", ackley, milliseconds );
 	return ackley;
 }
 
@@ -224,6 +305,6 @@ double ackley_CPU_impl(double *z, int dim){
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&milliseconds, start, stop);
 	printf("/***** CPU IMPLEMENTATION *****/\n");
-	printf("CPU implementation for ackley shift is %1.20E, time is %f ms\n", sum, milliseconds );
+	printf("CPU implementation for ackley shift is		%1.20E, time is %f ms\n", sum, milliseconds );
 	return sum;
 }

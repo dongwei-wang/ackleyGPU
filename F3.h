@@ -11,6 +11,7 @@ class F3 {
 		double compute(double* x, int dimensiont) ;
 		double compute_CPU(double *x, int dimension);
 		double compute_GPU(double *x, int dimension);
+		double compute_GPU_steams(double *x, int dimension, int stream_cnt);
 
 		void transform_osz(double *z, int dim);
 		void transform_asy(double *z, double beta, int dim);

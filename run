@@ -1,2 +1,1 @@
-./ackley ./cdatafiles/F3-xopt_1000.txt ./cdatafiles/F3-xopt_40960.txt ./cdatafiles/F3-xopt_81920.txt
-
+./ackley ./cdatafiles/F3-xopt_40960.txt ./cdatafiles/F3-xopt_81920.txt
